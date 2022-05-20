@@ -1,12 +1,13 @@
-import { useQuery } from '@apollo/client';
-import { PlayArrow, QueueMusic } from '@mui/icons-material';
+import { useSubscription } from '@apollo/client';
+import { Pause, PlayArrow, QueueMusic } from '@mui/icons-material';
 import { Card, CardActions, CardContent, CardMedia, IconButton, Typography } from '@mui/material';
-import React from 'react';
-import { GET_SONGS } from '../graphql/query';
+import React, { useContext, useEffect, useState } from 'react';
+import { SongContext } from '../App';
+import { GET_SONGS } from '../graphql/subscription';
 
-export default function ListaMusica() {
+export default function ListaMusica({ queue }) {
 
-    const { data, loading, error } = useQuery(GET_SONGS);
+    const { data, loading, error } = useSubscription(GET_SONGS);
 
     if (loading) {
         return <div>Carregando...</div>
@@ -19,7 +20,21 @@ export default function ListaMusica() {
 
     function Musica({ musica }) {
         const { thumbnail, artist, title } = musica;
+        const [isCurrentSong, setIsCurrentSong] = useState(false);
+        const { currentSong, songDispatch } = useContext(SongContext);
 
+        useEffect(() => {
+            setIsCurrentSong(currentSong.song.id == musica.id && currentSong.isPlaying)
+        }, [currentSong.song.id, currentSong.isPlaying]);
+
+       function handleChangeSong(){
+            songDispatch({ type: "CHANGE_SONG", payload: { musica } });
+            songDispatch({ type: isCurrentSong ? "PAUSE_SONG" : "PLAY_SONG" });
+       }
+
+       function handleAddQueue(){
+           queue.queueDispatch({type: "ADD_QUEUE", payload: {musica}})
+       }
 
         return (<Card style={{ display: 'flex', alignItems: 'center', margin: '10px' }}>
             <CardMedia image={thumbnail} style={{ objectFit: 'cover', width: '140px', height: '140px' }} />
@@ -29,8 +44,10 @@ export default function ListaMusica() {
                     <Typography variant='subtitle1' component="h3">{artist}</Typography>
                 </CardContent>
                 <CardActions>
-                    <IconButton><PlayArrow color="secondary" /></IconButton>
-                    <IconButton><QueueMusic color="secondary" /></IconButton>
+                    <IconButton onClick={handleChangeSong}>
+                        {isCurrentSong ? <Pause color='secondary'/> :  <PlayArrow color='secondary'/>}
+                    </IconButton>
+                    <IconButton onClick={handleAddQueue}><QueueMusic color="secondary" /></IconButton>
                 </CardActions>
             </div>
         </Card>);
