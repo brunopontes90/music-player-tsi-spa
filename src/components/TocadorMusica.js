@@ -1,12 +1,29 @@
 import { PlayArrow, SkipNext, SkipPrevious, Pause } from '@mui/icons-material';
 import { Card, CardContent, CardActions, IconButton, Typography, Slider, CardMedia, useMediaQuery } from '@mui/material';
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { SongContext } from '../App';
 import FilaMusica from './FilaMusica';
+import ReactPlayer from "react-player";
 
 export default function TocadorMusica({ queue }) {
     const telaGrande = useMediaQuery('(min-width: 900px)');
     const { currentSong, songDispatch } = useContext(SongContext);
+    const [played, setPlayed] = useState(0);
+    const [changing, setChanging] = useState(false);
+    const ReactPlayerRef = useRef();
+    const [playedSeconds, setPlayedSeconds] = useState(0);
+    const [posicaoNaFila, setPosicaoNaFila] = useState(0);
+
+    useEffect(() => {
+        const songIndex = queue.currentQueue.findIndex((song) => song.id === currentSong.song.id);
+        setPosicaoNaFila(songIndex);
+    }, [queue, currentSong.song.id]);
+
+    useEffect(() => {
+        if(played > 0.99){
+            handleSongNext();
+        }
+    }, [played]);
 
     function handlePlaybutton(){
         songDispatch({
@@ -14,25 +31,68 @@ export default function TocadorMusica({ queue }) {
         });
     }
     
+    function handleSongProgress({ played, playedSeconds }){
+        if(!changing){
+            setPlayed(played);
+        }
+        setPlayedSeconds(playedSeconds);
+    }
+
+    function handleSliderChange(event, newValue){
+        setPlayed(newValue);
+        ReactPlayerRef.current.seekTo(played);
+    }
+
+    function handleSliderChanging(){
+        setChanging(true);
+    }
+
+    function handleSliderChanged(){
+        setChanging(false);
+    }
+
+    function handleSongPrevious(){
+        const nextSong = queue.currentQueue[posicaoNaFila - 1];
+        if(nextSong){
+            songDispatch({ type: "CHANGE_SONG", payload: { musica: nextSong } });
+        }
+    }
+
+    function handleSongNext(){
+        const nextSong = queue.currentQueue[posicaoNaFila + 1];
+        if(nextSong){
+            songDispatch({ type: "CHANGE_SONG", payload: { musica: nextSong } });
+        }
+    }
+
     return (
         <>
             <Card style={{ display: 'flex', flexDirection: 'column', margin: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <CardContent>
-                        <Typography variant="h5" component="h2">{currentSong.song.title}</Typography>
-                        <Typography variant="subtitle1" component="h3">{currentSong.song.artist}</Typography>
+                        <Typography variant="h5" component="h2">{ currentSong.song.title }</Typography>
+                        <Typography variant="subtitle1" component="h3">{ currentSong.song.artist }</Typography>
                     </CardContent>
                     <CardActions>
-                        <IconButton><SkipPrevious /></IconButton>
-                        <IconButton onClick={handlePlaybutton}>
-                            {currentSong.isPlaying? <Pause/> :  <PlayArrow style={{fontSize: '40px'}}/>}
+                        <IconButton onClick={handleSongPrevious}>
+                            <SkipPrevious />
                         </IconButton>
-                        <IconButton><SkipNext /></IconButton>
-                        <Typography>00:32:17</Typography>
+                        <IconButton onClick={handlePlaybutton}>
+                            { currentSong.isPlaying? <Pause/> :  <PlayArrow style={ {fontSize: '40px'} } /> }
+                        </IconButton>
+                        <IconButton onClick={handleSongNext}>
+                            <SkipNext />
+                        </IconButton>
+                        <Typography>
+                            { new Date(playedSeconds * 1000).toISOString().substr(11, 8) }
+                        </Typography>
                     </CardActions>
                     <CardMedia style={{ width: '140px', height: '140px' }} image={currentSong.song.thumbnail} />
                 </div>
-                <Slider type="range" min={0} max={1} step={0.01} style={{ marginLeft: '30px', width: '90%' }} />
+                <Slider key="slider" value={played} type="range" min={0} max={1} step={0.01} style={{ marginLeft: '30px', width: '90%' }} 
+                    onChange={ handleSliderChange } onMouseDown={ handleSliderChanging } onMouseUp={ handleSliderChanged }
+                />
+                <ReactPlayer ref={ReactPlayerRef} hidden url={currentSong.song.url} playing={currentSong.isPlaying} onProgress={handleSongProgress} />
             </Card>
             {
                 telaGrande && <FilaMusica queue={queue} />

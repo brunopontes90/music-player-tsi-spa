@@ -77,7 +77,7 @@ export default function AdicionaMusica() {
             <Dialog open={dialog}>
                 <DialogTitle>Editar Música</DialogTitle>
                 <DialogContent style={{ textAlign: 'center' }}>
-                    <img style={{ width: '90%' }} src={song.thumbnail} />
+                    <img style={{ width: '90%' }} src={song.thumbnail} alt="Album"/>
                     <TextField onChange={handleEditDataSong} style={{ marginTop: '10px' }} variant="outlined" value={song.title} name="title" label="Nome da Música" fullWidth />
                     <TextField onChange={handleEditDataSong} style={{ marginTop: '10px' }} variant="outlined" value={song.artist} name="artist" label="Nome do Artista" fullWidth />
                     <TextField onChange={handleEditDataSong} style={{ marginTop: '10px' }} variant="outlined" value={song.thumbnail} name="thumbnail" label="Imagem" fullWidth />

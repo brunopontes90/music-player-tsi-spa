@@ -24,8 +24,8 @@ export default function ListaMusica({ queue }) {
         const { currentSong, songDispatch } = useContext(SongContext);
 
         useEffect(() => {
-            setIsCurrentSong(currentSong.song.id == musica.id && currentSong.isPlaying)
-        }, [currentSong.song.id, currentSong.isPlaying]);
+            setIsCurrentSong(currentSong.song.id === musica.id && currentSong.isPlaying)
+        }, [currentSong.song.id, currentSong.isPlaying, musica.id]);
 
        function handleChangeSong(){
             songDispatch({ type: "CHANGE_SONG", payload: { musica } });

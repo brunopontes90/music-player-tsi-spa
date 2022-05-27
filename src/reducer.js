@@ -1,5 +1,3 @@
-import { act } from "react-dom/test-utils";
-
 export function songReducer(state, action) {
     switch (action.type) {
         case 'PLAY_SONG':
